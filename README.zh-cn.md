@@ -257,6 +257,24 @@ int main(int argc, char* argv[]) {
 }
 ```
 
+### 7. 尝试打印帮助
+
+```bash
+$ example -h
+greet with a person
+
+Usage: example [OPTIONS] --name <NAME>
+
+Options:
+  -n, --name <NAME>    name of the person to greet [REQUIRED]
+      --age <AGE>      age of the person to greet [default: 18]
+  -g                   have greeted before
+  -t                   how many times you want to greet
+  -p, --place <PLACE>  where to greet
+  -h, --help           Print help
+  -V, --version        Print version
+```
+
 ### 附加：构建你自己的 NORMAL 类型选项
 
 一个 NORMAL 类型的选项必须是[半正则](https://zh.cppreference.com/w/cpp/concepts/semiregular)并且与字符串可转换。

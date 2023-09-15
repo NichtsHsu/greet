@@ -257,6 +257,24 @@ int main(int argc, char* argv[]) {
 }
 ```
 
+### 7. Try print help
+
+```bash
+$ example -h
+greet with a person
+
+Usage: example [OPTIONS] --name <NAME>
+
+Options:
+  -n, --name <NAME>    name of the person to greet [REQUIRED]
+      --age <AGE>      age of the person to greet [default: 18]
+  -g                   have greeted before
+  -t                   how many times you want to greet
+  -p, --place <PLACE>  where to greet
+  -h, --help           Print help
+  -V, --version        Print version
+```
+
 ### EXT: build your own NORMAL type option
 
 A NORMAL type option should be [semiregular](https://en.cppreference.com/w/cpp/concepts/semiregular) and string convertable.
