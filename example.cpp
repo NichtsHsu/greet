@@ -11,15 +11,26 @@ struct Args : public greet::information {
     std::string description() override { return "greet with a person"; }
     greet::meta genmeta() override {
         return {
-            greet::opt(name).shrt('n').lng("name").required().about(
-                "name of the person to greet"),
-            greet::opt(age).lng("age").def(18u).about(
-                "age of the person to greet"),
-            greet::opt(greeted).shrt('g').about("have greeted before"),
-            greet::opt(times).shrt('t').about(
-                "how many times you want to greet"),
-            greet::opt(places).shrt('p').lng("place").allow_hyphen().about(
-                "where to greet"),
+            greet::opt(name)
+                .shrt('n')
+                .lng("name")
+                .required()
+                .about("name of the person to greet"),
+            greet::opt(age)
+                .lng("age")
+                .def(18u)
+                .about("age of the person to greet"),
+            greet::opt(greeted)
+                .shrt('g')
+                .about("have greeted before"),
+            greet::opt(times)
+                .shrt('t')
+                .about("how many times you want to greet"),
+            greet::opt(places)
+                .shrt('p')
+                .lng("place")
+                .allow_hyphen()
+                .about("where to greet"),
         };
     }
 };
