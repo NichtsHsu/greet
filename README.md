@@ -1,5 +1,7 @@
 # Greet
 
+**English** | [简体中文](README.zh-cn.md)
+
 A C++ Command Line Argument Parser, which want to provide more modern interfaces with C++23 features.
 
 Inspired by [clap](https://github.com/clap-rs/clap) and [glaze](https://github.com/stephenberry/glaze), and heavily referenced [clap](https://github.com/clap-rs/clap) for behaviors.
@@ -41,9 +43,9 @@ clang example.cpp -std=c++2b -stdlib=libc++ -o example
 
 * For options that need an argument, `-a xxx`, `-axxx`, `-a=xxx`, `--aaa xxx` and `--aaa=xxx` are acceptable.
 * For options that don't need an argument, `-e -f -g`, `--eee --fff --ggg` and `-efg` are acceptable.
-* when you mix them, such as `-faxxxg`, it will be parsed as `-f -a xxxg` but not `-f -a xxx -g`.
+* When you mix them, such as `-faxxxg`, it will be parsed as `-f -a xxxg` but not `-f -a xxx -g`.
 * If `-a` doesn't need an argument, `-a-b` will be parsed as `-a -- -b` then an error will be reported because of `--`. But if `-a` need an argument, `-a-b` will be parsed to option `-a` with its value `-b`.
-* When the value of a option is start with a hyphen(`-`), `-a-b`, `-a=-b`, `--aaa=-b` are acceptable. However, `-a -b` and `--aaa -b` is not acceptable by default, and will be parsed to two options.
+* When the value of a option is start with a hyphen(`-`), `-a-b`, `-a=-b` and `--aaa=-b` are acceptable. However, `-a -b` and `--aaa -b` is not acceptable by default, and will be parsed to two options.
 
 ## Guide to use
 
@@ -121,7 +123,7 @@ The COUNTER type option can only be `greet::counter`.
 
 The COUNTER option doesn't need an argument, and can be used multiple times -- it's counting how many times the user has used this option. For an example, `-a -a -a -a` makes the `counter` to evaluate to `4`.
 
-Note: value of `greet::counter` can be implicitly converted to `size_t`. You can use it as `size_t` anywhere, for examples, to compare or print.
+NOTE: value of `greet::counter` can be implicitly converted to `size_t`. You can use it as `size_t` anywhere, for examples, to compare or print.
 
 #### 3.4 VECTOR type
 
@@ -184,7 +186,7 @@ greet::opt(aaa)     // bind to the `aaa` option
                     // if no long flag, default to 'VALUE'
     .allow_hyphen() // allow value start with a hyphen(`-`),
                     // this only affects `-a -b` and `--aaa -b`
-    .about("a NORMAL type option")   // about message
+    .about("a NORMAL type option")  // about message
 ```
 
 #### 4.2 available meta informations of BOOL types
@@ -204,7 +206,7 @@ greet::opt(aaa)     // bind to the `aaa` option
     .shrt('a')      // the short flag: '-a'
     .lng("aaa")     // the long flag: '--aaa'
                     // You should provide at least one of the two
-    .about("a BOOL type option")   // about message
+    .about("a COUNTER type option") // about message
 ```
 
 #### 4.4 available meta informations of VECTOR types
@@ -219,8 +221,10 @@ greet::opt(aaa)     // bind to the `aaa` option
                     // if no long flag, default to 'VALUE'
     .allow_hyphen() // allow value start with a hyphen(`-`),
                     // this only affects `-a -b` and `--aaa -b`
-    .about("a NORMAL type option")   // about message
+    .about("a VECTOR type option")  // about message
 ```
+
+*NOTE: `-h`, `--help`, `-V` and `--version` are reserved for print help and version.*
 
 ### 5. Get arguments
 
