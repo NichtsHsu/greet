@@ -69,7 +69,7 @@ struct Args: public greet::information {
     std::string version() override { return "greet v0.1.0"; }
 
     // description of program, will be printed at '-h' or '--help'
-    std::string description() override { return "greet with a person"; }
+    std::string description() override { return "Greet with a person"; }
 
     // we will learn about it soon
     greet::meta genmeta() override { /* TODO */}
@@ -92,7 +92,7 @@ struct Args: public greet::information {
     std::string version() override { return "greet v0.1.0"; }
 
     // description of program, will be printed at '-h' or '--help'
-    std::string description() override { return "greet with a person"; }
+    std::string description() override { return "Greet with a person"; }
 
     // we will learn about it soon
     greet::meta genmeta() override { /* TODO */}
@@ -151,22 +151,22 @@ struct Args: public greet::information {
                 .shrt('n')
                 .lng("name")
                 .required()
-                .about("name of the person to greet"),
+                .about("Name of the person to greet"),
             greet::opt(age)
                 .lng("age")
                 .def(18u)
-                .about("age of the person to greet"),
+                .about("Age of the person to greet"),
             greet::opt(greeted)
                 .shrt('g')
-                .about("have greeted before"),
+                .about("Have greeted before"),
             greet::opt(times)
                 .shrt('t')
-                .about("how many times you want to greet"),
+                .about("How many times you want to greet"),
             greet::opt(places)
                 .shrt('p')
                 .lng("place")
                 .allow_hyphen()
-                .about("where to greet"),
+                .about("Where to greet"),
         };
     }
 }
@@ -186,7 +186,7 @@ greet::opt(aaa)     // bind to the `aaa` option
                     // if no long flag, default to 'VALUE'
     .allow_hyphen() // allow value start with a hyphen(`-`),
                     // this only affects `-a -b` and `--aaa -b`
-    .about("a NORMAL type option")  // about message
+    .about("A NORMAL type option")  // about message
 ```
 
 #### 4.2 available meta informations of BOOL types
@@ -196,7 +196,7 @@ greet::opt(aaa)     // bind to the `aaa` option
     .shrt('a')      // the short flag: '-a'
     .lng("aaa")     // the long flag: '--aaa'
                     // You should provide at least one of the two
-    .about("a BOOL type option")   // about message
+    .about("A BOOL type option")   // about message
 ```
 
 #### 4.3 available meta informations of COUNTER types
@@ -206,7 +206,7 @@ greet::opt(aaa)     // bind to the `aaa` option
     .shrt('a')      // the short flag: '-a'
     .lng("aaa")     // the long flag: '--aaa'
                     // You should provide at least one of the two
-    .about("a COUNTER type option") // about message
+    .about("A COUNTER type option") // about message
 ```
 
 #### 4.4 available meta informations of VECTOR types
@@ -221,7 +221,7 @@ greet::opt(aaa)     // bind to the `aaa` option
                     // if no long flag, default to 'VALUE'
     .allow_hyphen() // allow value start with a hyphen(`-`),
                     // this only affects `-a -b` and `--aaa -b`
-    .about("a VECTOR type option")  // about message
+    .about("A VECTOR type option")  // about message
 ```
 
 *NOTE: `-h`, `--help`, `-V` and `--version` are reserved for print help and version.*
@@ -266,11 +266,11 @@ greet with a person
 Usage: example [OPTIONS] --name <NAME>
 
 Options:
-  -n, --name <NAME>    name of the person to greet [REQUIRED]
-      --age <AGE>      age of the person to greet [default: 18]
-  -g                   have greeted before
-  -t                   how many times you want to greet
-  -p, --place <PLACE>  where to greet
+  -n, --name <NAME>    Name of the person to greet [REQUIRED]
+      --age <AGE>      Age of the person to greet [default: 18]
+  -g                   Have greeted before
+  -t                   How many times you want to greet
+  -p, --place <PLACE>  Where to greet
   -h, --help           Print help
   -V, --version        Print version
 ```

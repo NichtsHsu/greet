@@ -69,7 +69,7 @@ struct Args: public greet::information {
     std::string version() override { return "greet v0.1.0"; }
 
     // 程序简介, 会在 '-h' 或 '--help' 时打印
-    std::string description() override { return "greet with a person"; }
+    std::string description() override { return "Greet with a person"; }
 
     // 我们马上就会知道这是什么
     greet::meta genmeta() override { /* TODO */}
@@ -92,7 +92,7 @@ struct Args: public greet::information {
     std::string version() override { return "greet v0.1.0"; }
 
     // 程序简介, 会在 '-h' 或 '--help' 时打印
-    std::string description() override { return "greet with a person"; }
+    std::string description() override { return "Greet with a person"; }
 
     // 我们马上就会知道这是什么
     greet::meta genmeta() override { /* TODO */}
@@ -151,22 +151,22 @@ struct Args: public greet::information {
                 .shrt('n')
                 .lng("name")
                 .required()
-                .about("name of the person to greet"),
+                .about("Name of the person to greet"),
             greet::opt(age)
                 .lng("age")
                 .def(18u)
-                .about("age of the person to greet"),
+                .about("Age of the person to greet"),
             greet::opt(greeted)
                 .shrt('g')
-                .about("have greeted before"),
+                .about("Have greeted before"),
             greet::opt(times)
                 .shrt('t')
-                .about("how many times you want to greet"),
+                .about("How many times you want to greet"),
             greet::opt(places)
                 .shrt('p')
                 .lng("place")
                 .allow_hyphen()
-                .about("where to greet"),
+                .about("Where to greet"),
         };
     }
 }
@@ -186,7 +186,7 @@ greet::opt(aaa)     // 绑定到 `aaa` 选项
                     // 如果没有长标志则是 `VALUE`
     .allow_hyphen() // 允许值以连字符（`-`）开头，
                     // 这只影响 `-a -b` 和 `--aaa -b`
-    .about("a NORMAL type option")  // 选项相关信息
+    .about("A NORMAL type option")  // 选项相关信息
 ```
 
 #### 4.2 BOOL 类型可用的元信息
@@ -194,9 +194,9 @@ greet::opt(aaa)     // 绑定到 `aaa` 选项
 ```cpp
 greet::opt(aaa)     // 绑定到 `aaa` 选项
     .shrt('a')      // 短标志：'-a'
-    .lng("aaa")     /// 长标志：'--aaa'
+    .lng("aaa")     // 长标志：'--aaa'
                     // 至少要提供二者之一
-    .about("a BOOL type option")   // 选项相关信息
+    .about("A BOOL type option")   // 选项相关信息
 ```
 
 #### 4.3 COUNTER 类型可用的元信息
@@ -204,9 +204,9 @@ greet::opt(aaa)     // 绑定到 `aaa` 选项
 ```cpp
 greet::opt(aaa)     // 绑定到 `aaa` 选项
     .shrt('a')      // 短标志：'-a'
-    .lng("aaa")     /// 长标志：'--aaa'
+    .lng("aaa")     // 长标志：'--aaa'
                     // 至少要提供二者之一
-    .about("a COUNTER type option") // 选项相关信息
+    .about("A COUNTER type option") // 选项相关信息
 ```
 
 #### 4.4 VECTOR 类型可用的元信息
@@ -221,7 +221,7 @@ greet::opt(aaa)     // 绑定到 `aaa` 选项
                     // 如果没有长标志则是 `VALUE`
     .allow_hyphen() // 允许值以连字符（`-`）开头，
                     // 这只影响 `-a -b` 和 `--aaa -b`
-    .about("a VECTOR type option")   // 选项相关信息
+    .about("A VECTOR type option")   // 选项相关信息
 ```
 
 *注意：`-h`, `--help`, `-V` 以及 `--version` 被预留为打印帮助和版本号。*
@@ -266,11 +266,11 @@ greet with a person
 Usage: example [OPTIONS] --name <NAME>
 
 Options:
-  -n, --name <NAME>    name of the person to greet [REQUIRED]
-      --age <AGE>      age of the person to greet [default: 18]
-  -g                   have greeted before
-  -t                   how many times you want to greet
-  -p, --place <PLACE>  where to greet
+  -n, --name <NAME>    Name of the person to greet [REQUIRED]
+      --age <AGE>      Age of the person to greet [default: 18]
+  -g                   Have greeted before
+  -t                   How many times you want to greet
+  -p, --place <PLACE>  Where to greet
   -h, --help           Print help
   -V, --version        Print version
 ```

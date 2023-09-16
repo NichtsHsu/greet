@@ -15,22 +15,22 @@ struct Args : public greet::information {
                 .shrt('n')
                 .lng("name")
                 .required()
-                .about("name of the person to greet"),
+                .about("Name of the person to greet"),
             greet::opt(age)
                 .lng("age")
                 .def(18u)
-                .about("age of the person to greet"),
+                .about("Age of the person to greet"),
             greet::opt(greeted)
                 .shrt('g')
-                .about("have greeted before"),
+                .about("Have greeted before"),
             greet::opt(times)
                 .shrt('t')
-                .about("how many times you want to greet"),
+                .about("How many times you want to greet"),
             greet::opt(places)
                 .shrt('p')
                 .lng("place")
                 .allow_hyphen()
-                .about("where to greet"),
+                .about("Where to greet"),
         };
     }
 };
