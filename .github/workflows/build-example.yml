@@ -1,0 +1,26 @@
+name: Build example
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install GCC 13
+      run: |
+        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install -y gcc-13 g++-13
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        g++-13 example.cpp -std=c++23 -o example
+    - name: Run
+      run: |
+        ./example -h
