@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
 #include <charconv>
 #include <compare>
 #include <concepts>
@@ -1196,10 +1197,9 @@ meta::meta(OptionTs&&... options)
       _opts{},
       _required_opts{},
       _sorted_by_flag{} {
-    (void)(int[]){
-        0,
-        (_opts.emplace_back(_detail::anyopt(std::forward<OptionTs>(options))),
-         0)...};
+    (void)std::begin({0, (_opts.emplace_back(
+                              _detail::anyopt(std::forward<OptionTs>(options))),
+                          0)...});
 
     _opts.emplace_back(
         _detail::anyopt(opt(_help).shrt('h').lng("help").about("Print help")));
