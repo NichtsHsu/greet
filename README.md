@@ -181,10 +181,11 @@ greet::opt(aaa)     // bind to the `aaa` option
                     // You should provide at least one of the two
     .required()     // user must provide this option
     .def(0)         // default value, only valid when didn't set `required`
-    .argname("aha") // the argument name when print help,
-                    // default to the uppercase long flag.
+                    // can construct the value in-place
+    .argname("aha") // the argument name when print help
+                    // default to the uppercase long flag
                     // if no long flag, default to 'VALUE'
-    .allow_hyphen() // allow value start with a hyphen(`-`),
+    .allow_hyphen() // allow value start with a hyphen(`-`)
                     // this only affects `-a -b` and `--aaa -b`
     .about("A NORMAL type option")  // about message
 ```
@@ -216,10 +217,10 @@ greet::opt(aaa)     // bind to the `aaa` option
     .shrt('a')      // the short flag: '-a'
     .lng("aaa")     // the long flag: '--aaa'
                     // You should provide at least one of the two
-    .argname("aha") // the argument name when print help,
-                    // default to the uppercase long flag.
+    .argname("aha") // the argument name when print help
+                    // default to the uppercase long flag
                     // if no long flag, default to 'VALUE'
-    .allow_hyphen() // allow value start with a hyphen(`-`),
+    .allow_hyphen() // allow value start with a hyphen(`-`)
                     // this only affects `-a -b` and `--aaa -b`
     .about("A VECTOR type option")  // about message
 ```

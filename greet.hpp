@@ -230,12 +230,12 @@ class opt_wrapper<OptT> {
     opt_wrapper&& required() &&;
     opt_wrapper& allow_hyphen() &;
     opt_wrapper&& allow_hyphen() &&;
-    template <typename DefT>
-        requires std::constructible_from<OptT, DefT>
-    opt_wrapper& def(DefT&& value) &;
-    template <typename DefT>
-        requires std::constructible_from<OptT, DefT>
-    opt_wrapper&& def(DefT&& value) &&;
+    template <typename... DefT>
+        requires std::constructible_from<OptT, DefT...>
+    opt_wrapper& def(DefT&&... value) &;
+    template <typename... DefT>
+        requires std::constructible_from<OptT, DefT...>
+    opt_wrapper&& def(DefT&&... value) &&;
 
    private:
     friend anyopt;
@@ -495,18 +495,18 @@ opt_wrapper<OptT>&& opt_wrapper<OptT>::argname(const std::string& value) && {
 }
 
 template <option OptT>
-template <typename DefT>
-    requires std::constructible_from<OptT, DefT>
-opt_wrapper<OptT>& opt_wrapper<OptT>::def(DefT&& value) & {
-    _optref.get() = OptT(std::forward<DefT>(value));
+template <typename... DefT>
+    requires std::constructible_from<OptT, DefT...>
+opt_wrapper<OptT>& opt_wrapper<OptT>::def(DefT&&... value) & {
+    _optref.get() = OptT(std::forward<DefT>(value)...);
     return *this;
 }
 
 template <option OptT>
-template <typename DefT>
-    requires std::constructible_from<OptT, DefT>
-opt_wrapper<OptT>&& opt_wrapper<OptT>::def(DefT&& value) && {
-    _optref.get() = OptT(std::forward<DefT>(value));
+template <typename... DefT>
+    requires std::constructible_from<OptT, DefT...>
+opt_wrapper<OptT>&& opt_wrapper<OptT>::def(DefT&&... value) && {
+    _optref.get() = OptT(std::forward<DefT>(value)...);
     return std::move(*this);
 }
 
