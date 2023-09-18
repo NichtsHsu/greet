@@ -498,7 +498,7 @@ template <option OptT>
 template <typename DefT>
     requires std::constructible_from<OptT, DefT>
 opt_wrapper<OptT>& opt_wrapper<OptT>::def(DefT&& value) & {
-    _optref.get() = OptT{std::forward<DefT>(value)};
+    _optref.get() = OptT(std::forward<DefT>(value));
     return *this;
 }
 
@@ -506,14 +506,14 @@ template <option OptT>
 template <typename DefT>
     requires std::constructible_from<OptT, DefT>
 opt_wrapper<OptT>&& opt_wrapper<OptT>::def(DefT&& value) && {
-    _optref.get() = OptT{std::forward<DefT>(value)};
+    _optref.get() = OptT(std::forward<DefT>(value));
     return std::move(*this);
 }
 
 opt_wrapper<bool>::opt_wrapper(bool& optref)
-    : _optref{optref}, _shrt{'\0'}, _lng{}, _about{} {}
+    : _optref(optref), _shrt('\0'), _lng{}, _about{} {}
 
-opt_wrapper<bool>::opt_wrapper(opt_wrapper&& other) : _optref{other._optref} {
+opt_wrapper<bool>::opt_wrapper(opt_wrapper&& other) : _optref(other._optref) {
     _shrt = other._shrt;
     _lng = std::move(other._lng);
     _about = std::move(other._about);
@@ -558,10 +558,10 @@ opt_wrapper<bool>&& opt_wrapper<bool>::about(const std::string& value) && {
 }
 
 opt_wrapper<counter>::opt_wrapper(counter& optref)
-    : _optref{optref}, _shrt{'\0'}, _lng{}, _about{} {}
+    : _optref(optref), _shrt('\0'), _lng{}, _about{} {}
 
 opt_wrapper<counter>::opt_wrapper(opt_wrapper&& other)
-    : _optref{other._optref} {
+    : _optref(other._optref) {
     _shrt = other._shrt;
     other._shrt = '\0';
     _lng = std::move(other._lng);
@@ -610,16 +610,16 @@ opt_wrapper<counter>&& opt_wrapper<counter>::about(
 
 template <option OptT>
 opt_wrapper<std::vector<OptT>>::opt_wrapper(std::vector<OptT>& optref)
-    : _optref{optref},
-      _allow_hyphen{false},
-      _shrt{'\0'},
+    : _optref(optref),
+      _allow_hyphen(false),
+      _shrt('\0'),
       _lng{},
       _about{},
       _argname{} {}
 
 template <option OptT>
 opt_wrapper<std::vector<OptT>>::opt_wrapper(opt_wrapper&& other)
-    : _optref{other._optref} {
+    : _optref(other._optref) {
     _allow_hyphen = other._allow_hyphen;
     _shrt = other._shrt;
     _lng = std::move(other._lng);
@@ -711,19 +711,19 @@ opt_wrapper<std::vector<OptT>>::allow_hyphen() && {
 
 template <typename OptT>
 anyopt::anyopt(const opt_wrapper<OptT>& origin)
-    : opttype{opt_type_v<OptT>},
-      _origin{new opt_wrapper<OptT>{origin}, [](void* ptr) {
-                  delete reinterpret_cast<opt_wrapper<OptT>*>(ptr);
-              }} {
+    : opttype(opt_type_v<OptT>),
+      _origin(new opt_wrapper<OptT>(origin), [](void* ptr) {
+          delete reinterpret_cast<opt_wrapper<OptT>*>(ptr);
+      }) {
     _initialize<OptT>();
 }
 
 template <typename OptT>
 anyopt::anyopt(opt_wrapper<OptT>&& origin)
-    : opttype{opt_type_v<OptT>},
-      _origin{new opt_wrapper<OptT>{std::move(origin)}, [](void* ptr) {
-                  delete reinterpret_cast<opt_wrapper<OptT>*>(ptr);
-              }} {
+    : opttype(opt_type_v<OptT>),
+      _origin(new opt_wrapper<OptT>(std::move(origin)), [](void* ptr) {
+          delete reinterpret_cast<opt_wrapper<OptT>*>(ptr);
+      }) {
     _initialize<OptT>();
 }
 
@@ -740,7 +740,7 @@ void anyopt::_initialize() {
 }
 
 anyopt::anyopt(anyopt&& other)
-    : opttype{other.opttype}, _origin{std::move(other._origin)} {
+    : opttype(other.opttype), _origin(std::move(other._origin)) {
     _shrt = other._shrt;
     _lng = other._lng;
     _about = other._about;
@@ -922,7 +922,7 @@ class print_helper {
 };
 
 print_helper::print_helper(std::string&& program_name, meta& m)
-    : _program_name{std::move(program_name)}, _metaref{m} {}
+    : _program_name(std::move(program_name)), _metaref(m) {}
 
 void print_helper::print_usage() const {
     std::cout << "Usage: " << _program_name << " [OPTIONS]";
@@ -1077,7 +1077,7 @@ void print_helper::print_options() const {
 
 template <typename OptT>
 _detail::opt_wrapper<OptT> opt(OptT& optref) {
-    return {optref};
+    return _detail::opt_wrapper<OptT>(optref);
 };
 
 counter::counter() : _counter{0} {}
@@ -1169,7 +1169,7 @@ auto string_converter<char>::from_str(const char* str)
 }
 
 std::string string_converter<char>::to_str(const char& value) {
-    return std::string{1, value};
+    return std::string(1, value);
 }
 
 auto string_converter<const char*>::from_str(const char* str)
@@ -1257,7 +1257,7 @@ template <args_group ArgsGroupT>
 ArgsGroupT greet(int argc, char* argv[]) {
     ArgsGroupT args{};
     meta m = args.genmeta();
-    _detail::print_helper printer{_detail::filename(argv[0]), m};
+    _detail::print_helper printer(_detail::filename(argv[0]), m);
 
     _detail::remove_one_arg(argc, argv);
 
@@ -1312,11 +1312,11 @@ ArgsGroupT greet(int argc, char* argv[]) {
             case _detail::LONG: {
                 char* split_pos = std::strchr(argv[0], '=');
                 if (split_pos) {
-                    std::string flag{argv[0], split_pos};
+                    std::string flag(argv[0], split_pos);
                     argv[0] = split_pos;
                     parse_helper(flag, false);
                 } else {
-                    std::string flag{argv[0]};
+                    std::string flag(argv[0]);
                     _detail::remove_one_arg(argc, argv);
                     parse_helper(flag, true);
                 }
