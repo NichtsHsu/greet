@@ -11,31 +11,31 @@ struct Args : public greet::information {
     std::string description() override { return "greet with a person"; }
     greet::meta genmeta() override {
         return {
-            greet::opt(name)
-                .shrt('n')
-                .lng("name")
-                .required()
+            greet::opt(name)  //
+                .shrt('n')    //
+                .lng("name")  //
+                .required()   //
                 .about("Name of the person to greet"),
-            greet::opt(age)
-                .lng("age")
-                .def(18u)
+            greet::opt(age)  //
+                .lng("age")  //
+                .def(18u)    //
                 .about("Age of the person to greet"),
-            greet::opt(greeted)
-                .shrt('g')
+            greet::opt(greeted)  //
+                .shrt('g')       //
                 .about("Have greeted before"),
-            greet::opt(times)
-                .shrt('t')
+            greet::opt(times)  //
+                .shrt('t')     //
                 .about("How many times you want to greet"),
-            greet::opt(places)
-                .shrt('p')
-                .lng("place")
-                .allow_hyphen()
+            greet::opt(places)   //
+                .shrt('p')       //
+                .lng("place")    //
+                .allow_hyphen()  //
                 .about("Where to greet"),
         };
     }
 };
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     Args args = greet::greet<Args>(argc, argv);
 
     std::cout << "I will greet " << args.name << std::endl;
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     std::cout << "We should greet " << args.times << " times" << std::endl;
     std::cout << "We may greet at " << args.places.size()
               << " places:" << std::endl;
-    for (const auto& place : args.places) {
+    for (const auto &place : args.places) {
         std::cout << "\t" << place << std::endl;
     }
 }

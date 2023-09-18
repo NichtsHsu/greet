@@ -1,0 +1,13 @@
+{
+    BasedOnStyle: Google,
+    IndentWidth: 4,
+    TabWidth: 4,
+    ReflowComments: false,
+    AccessModifierOffset: -2,
+    PointerAlignment: Right,
+    DerivePointerAlignment: false,
+    NamespaceIndentation: Inner,
+    AlignAfterOpenBracket: AlwaysBreak,
+    BinPackArguments: false,
+    BreakConstructorInitializers: AfterColon,
+}
