@@ -6,6 +6,7 @@ struct Args : public greet::information {
     bool greeted;
     greet::counter times;
     std::vector<std::string> places;
+    greet::ignored others;
 
     std::string version() override { return "greet v0.1.0"; }
     std::string description() override { return "greet with a person"; }
@@ -31,6 +32,7 @@ struct Args : public greet::information {
                 .lng("place")    //
                 .allow_hyphen()  //
                 .about("Where to greet"),
+            greet::opt(others),
         };
     }
 };
@@ -47,7 +49,9 @@ int main(int argc, char *argv[]) {
     std::cout << "We should greet " << args.times << " times" << std::endl;
     std::cout << "We may greet at " << args.places.size()
               << " places:" << std::endl;
-    for (const auto &place : args.places) {
+    for (const auto &place : args.places)
         std::cout << "\t" << place << std::endl;
-    }
+    std::cout << "Other things:" << std::endl;
+    for (const auto &other : args.others)
+        std::cout << "\t" << other << std::endl;
 }

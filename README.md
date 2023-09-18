@@ -42,10 +42,12 @@ clang example.cpp -std=c++2b -stdlib=libc++ -o example
 ## Rule of greet
 
 * For options that need an argument, `-a xxx`, `-axxx`, `-a=xxx`, `--aaa xxx` and `--aaa=xxx` are acceptable.
+* The short flag must be a printable character (from `!` to `~`) and cannot be `-`.
 * For options that don't need an argument, `-e -f -g`, `--eee --fff --ggg` and `-efg` are acceptable.
 * When you mix them, such as `-faxxxg`, it will be parsed as `-f -a xxxg` but not `-f -a xxx -g`.
 * If `-a` doesn't need an argument, `-a-b` will be parsed as `-a -- -b` then an error will be reported because of `--`. But if `-a` need an argument, `-a-b` will be parsed to option `-a` with its value `-b`.
-* When the value of a option is start with a hyphen(`-`), `-a-b`, `-a=-b` and `--aaa=-b` are acceptable. However, `-a -b` and `--aaa -b` is not acceptable by default, and will be parsed to two options.
+* When the value of a option is start with a hyphen(`-`), `-a-b`, `-a=-b` and `--aaa=-b` are acceptable. However, `-a -b` and `--aaa -b` is not acceptable by default, and will be parsed to two options. If `allow_hyphen` is set, `-a -b` and `--aaa -b` can be accepted, check [4.1 available meta informations of NORMAL types](#41-available-meta-informations-of-normal-types) to learn more.
+* Double-hyphen(`--`) means end of options, all subsequent arguments are no longer parsed. When input `-a --` and `allow_hyphen` of `-a` flag is set, this will not be considered the end of options. All ignored arguments can be collected through `greet::ignored`, check [3.5 IGNORED type](#35-ignored-type) to learn more.
 
 ## Guide to use
 
@@ -131,6 +133,16 @@ The VECTOR type options are `std::vector`s when the template parameter is NORMAL
 
 The VECTOR type options need an argument, and can be used multiple times. For an example, `-a 1 -a 2 -a 3` will get a vector of `1`, `2` and `3`.
 
+#### 3.5 IGNORED type
+
+The IGNORED type option is not really an option and can only be `greet::ignored`.
+
+Double-hyphen(`--`) means end of options, all subsequent arguments are no longer parsed. `greet::ignored` can collect them. This is optional, if you don't care about those ignored arguments you don't need to provide a `greet::ignored`.
+
+The `greet::ignored` type is a simple wrapper of `std::vector<std::string>`, you can use it as `std::vector<std::string>` anywhere.
+
+You shouldn't provide more than 1 `greet::ignored`, but don’t worry, it will be a compile-time error.
+
 ### 4. Complete meta
 
 Write meta informations for each of your options:
@@ -142,6 +154,7 @@ struct Args: public greet::information {
     bool greeted;
     greet::counter times;
     std::vector<std::string> places;
+    greet::ignored others;
 
     ...
 
@@ -167,6 +180,7 @@ struct Args: public greet::information {
                 .lng("place")
                 .allow_hyphen()
                 .about("Where to greet"),
+            greet::opt(others),
         };
     }
 }
@@ -225,6 +239,16 @@ greet::opt(aaa)     // bind to the `aaa` option
     .about("A VECTOR type option")  // about message
 ```
 
+#### 4.5 available meta informations of IGNORED types
+
+No, no any meta informations for `greet::ignored` type:
+
+```cpp
+greet::opt(aaa)     // bind to the `aaa` option
+```
+
+If you provide more than 1 `greet::ignored` type option, a compile-time error will be raised.
+
 *NOTE: `-h`, `--help`, `-V` and `--version` are reserved for print help and version.*
 
 ### 5. Get arguments
@@ -252,9 +276,11 @@ int main(int argc, char* argv[]) {
     std::cout << "We should greet " << args.times << " times" << std::endl;
     std::cout << "We may greet at " << args.places.size()
               << " places:" << std::endl;
-    for (const auto& place : args.places) {
+    for (const auto &place : args.places)
         std::cout << "\t" << place << std::endl;
-    }
+    std::cout << "Other things:" << std::endl;
+    for (const auto &other : args.others)
+        std::cout << "\t" << other << std::endl;
 }
 ```
 

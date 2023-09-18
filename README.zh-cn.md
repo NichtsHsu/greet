@@ -42,10 +42,12 @@ clang example.cpp -std=c++2b -stdlib=libc++ -o example
 ## Greet 规则
 
 * 对于需要参数的选项而言, `-a xxx`, `-axxx`, `-a=xxx`, `--aaa xxx` 和 `--aaa=xxx` 都是可接受的。
+* 短标志必须是可打印字符（`!` 到 `~`）并且不能是 `-`。
 * 对于不需要参数的选项而言, `-e -f -g`, `--eee --fff --ggg` 和 `-efg` 都是可接受的。
 * 当混合二者时，例如 `-faxxxg` 会被解析为 `-f -a xxxg` 而不是 `-f -a xxx -g`。
 * 如果 `-a` 不需要参数，`-a-b` 会被解析为 `-a -- -b` 然后因为 `--` 报错。但是如果 `-a` 需要一个参数，`-a-b` 则会被解析为 `-a` 选项的值为 `-b`。
-* 如果一个选项的值以连字符（`-`）开头，`-a-b`, `-a=-b` 和 `--aaa=-b` 都是可接受的。但是 `-a -b` 和 `--aaa -b` 默认不可接受，会被解析为两个选项。
+* 如果一个选项的值以连字符（`-`）开头，`-a-b`, `-a=-b` 和 `--aaa=-b` 都是可接受的。但是 `-a -b` 和 `--aaa -b` 默认不可接受，会被解析为两个选项。如果设置了 `allow_hyphen`，则 `-a -b` 和 `--aaa -b` 都可被接受，查看 [4.1 NORMAL 类型可用的元信息](#41-normal-类型可用的元信息)以了解更多。
+* 双连字符（`--`）意味着选项终止，后续的所有参数都不会被解析。当输入 `-a --` 并且 `-a` 设置了 `allow_hyphen` 时，则不会被视为选项终止。所有被忽略的参数都可以通过 `greet::ignored` 收集，查看 [3.5 IGNORED 类型](#35-ignored-类型)以了解更多。
 
 ## 使用指南
 
@@ -131,6 +133,16 @@ VECTOR 类型的选项是当模板参数为 NORMAL 类型时的 `std::vector`。
 
 VECTOR 类型的选项需要一个值，并且可以被多次指定。例如，`-a 1 -a 2 -a 3` 将会得到一个包含 `1`, `2` 和 `3` 的数组。
 
+#### 3.5 IGNORED 类型
+
+IGNORED 类型的选项并不是真正的选项，并且只能是 `greet::ignored`。
+
+双连字符（`--`）意味着选项终止，后续的所有参数都不会被解析。`greet::ignored` 可以收集它们。这是可选项，如果你对这些被忽略的参数不感兴趣，你不需要提供 `greet::ignored`。
+
+`greet::ignored` 只是 `std::vector<std::string>` 的简单包装，你可以把它当做 `std::vector<std::string>` 用在任何地方。
+
+你不应该提供超过一个 `greet::ignored`，不过不用担心，这将是一个编译期报错。
+
 ### 4. 完善元数据
 
 为你的每一个选项写下元信息：
@@ -142,6 +154,7 @@ struct Args: public greet::information {
     bool greeted;
     greet::counter times;
     std::vector<std::string> places;
+    greet::ignored others;
 
     ...
 
@@ -167,6 +180,7 @@ struct Args: public greet::information {
                 .lng("place")
                 .allow_hyphen()
                 .about("Where to greet"),
+            greet::opt(others),
         };
     }
 }
@@ -225,6 +239,16 @@ greet::opt(aaa)     // 绑定到 `aaa` 选项
     .about("A VECTOR type option")   // 选项相关信息
 ```
 
+#### 4.5 IGNORED 类型可用的元信息
+
+不，`greet::ignored` 类型没有任何元信息：
+
+```cpp
+greet::opt(aaa)     // 绑定到 `aaa` 选项
+```
+
+如果你提供超过一个 `greet::ignored` 选项，将会抛出一个编译期报错。
+
 *注意：`-h`, `--help`, `-V` 以及 `--version` 被预留为打印帮助和版本号。*
 
 ### 5. 获得参数
@@ -252,9 +276,11 @@ int main(int argc, char* argv[]) {
     std::cout << "We should greet " << args.times << " times" << std::endl;
     std::cout << "We may greet at " << args.places.size()
               << " places:" << std::endl;
-    for (const auto& place : args.places) {
+    for (const auto &place : args.places)
         std::cout << "\t" << place << std::endl;
-    }
+    std::cout << "Other things:" << std::endl;
+    for (const auto &other : args.others)
+        std::cout << "\t" << other << std::endl;
 }
 ```
 

@@ -53,15 +53,20 @@ namespace _detail {
 
     enum {
         ARGUMENT,
+        ENDARG,
         SHORT,
         LONG,
     };
 
     inline size_t argtype(const char *arg) {
-        if (std::strlen(arg) >= 2)
+        size_t length = std::strlen(arg);
+        if (length >= 2)
             if (arg[0] == '-') {
                 if (arg[1] == '-')
-                    return LONG;
+                    if (length == 2)
+                        return ENDARG;
+                    else
+                        return LONG;
                 else
                     return SHORT;
             }
@@ -87,6 +92,32 @@ namespace _detail {
         --argc;
         ++argv;
     }
+
+    template <typename SrchT, typename IdxSeqT, size_t CurIdx, typename... Ts>
+    struct type_positions {};
+
+    template <typename SrchT, size_t CurIdx, size_t... Idx>
+    struct type_positions<SrchT, std::index_sequence<Idx...>, CurIdx> {
+        using type = std::index_sequence<Idx...>;
+    };
+
+    template <
+        typename SrchT, typename CurT, typename... Ts, size_t CurIdx,
+        size_t... Idx>
+    struct type_positions<
+        SrchT, std::index_sequence<Idx...>, CurIdx, CurT, Ts...> {
+        using type = std::conditional_t<
+            std::is_same_v<std::decay_t<SrchT>, std::decay_t<CurT>>,
+            typename type_positions<
+                SrchT, std::index_sequence<Idx..., CurIdx>, CurIdx + 1,
+                Ts...>::type,
+            typename type_positions<
+                SrchT, std::index_sequence<Idx...>, CurIdx + 1, Ts...>::type>;
+    };
+
+    template <typename SrchT, typename... Ts>
+    using type_positions_t =
+        typename type_positions<SrchT, std::index_sequence<>, 0, Ts...>::type;
 }  // namespace _detail
 
 class meta;
@@ -110,6 +141,15 @@ class counter {
 
   private:
     size_t _counter;
+};
+
+class ignored : public std::vector<std::string> {
+  public:
+    ignored() = default;
+    ignored(const ignored &) = default;
+    ignored(ignored &&) = default;
+    ignored &operator=(const ignored &) = default;
+    ignored &operator=(ignored &&) = default;
 };
 
 template <typename OptT>
@@ -888,6 +928,7 @@ class meta {
     meta(meta &&) = default;
 
     auto opts() -> std::vector<_detail::anyopt> &;
+    auto ignored_args() -> std::optional<std::reference_wrapper<ignored>>;
     auto required_opts()
         -> const std::vector<std::reference_wrapper<_detail::anyopt>> &;
     auto query(const std::string &flag)
@@ -896,8 +937,12 @@ class meta {
     inline bool version() const;
 
   private:
+    template <typename FirstOptionT, typename... OptionTs>
+    inline void _unpack_opts(FirstOptionT &&first, OptionTs &&...options);
+
     bool _help, _version;
     std::vector<_detail::anyopt> _opts;
+    std::optional<std::reference_wrapper<ignored>> _ignored_args;
     std::vector<std::reference_wrapper<_detail::anyopt>> _required_opts;
     std::unordered_map<std::string, std::reference_wrapper<_detail::anyopt>>
         _sorted_by_flag;
@@ -1103,8 +1148,11 @@ namespace _detail {
 }  // namespace _detail
 
 template <typename OptT>
-_detail::opt_wrapper<OptT> opt(OptT &optref) {
-    return _detail::opt_wrapper<OptT>(optref);
+auto opt(OptT &optref) {
+    if constexpr (std::is_same_v<std::decay_t<OptT>, ignored>)
+        return std::ref(optref);
+    else
+        return _detail::opt_wrapper<OptT>(optref);
 };
 
 counter::counter() : _counter{0} {}
@@ -1222,12 +1270,16 @@ meta::meta(OptionTs &&...options) :
     _help{false},
     _version{false},
     _opts{},
+    _ignored_args(std::nullopt),
     _required_opts{},
     _sorted_by_flag{} {
-    (void)std::begin(
-        {0,
-         (_opts.emplace_back(_detail::anyopt(std::forward<OptionTs>(options))),
-          0)...});
+    static_assert(
+        _detail::type_positions_t<
+            std::reference_wrapper<ignored>,
+            OptionTs...>::size() <= 1,
+        "can only provide 0 or 1 `greet::ignored` option!");
+
+    _unpack_opts(std::forward<OptionTs>(options)...);
 
     _opts.emplace_back(
         _detail::anyopt(opt(_help).shrt('h').lng("help").about("Print help")));
@@ -1244,6 +1296,13 @@ meta::meta(OptionTs &&...options) :
 
         bool inserted;
         if (optref.shrt() != '\0') {
+            if (optref.shrt() < '!' || optref.shrt() > '~')
+                _detail::print_helper::internal_error(
+                    "the short flag must be a printable character.");
+            if (optref.shrt() == '-')
+                _detail::print_helper::internal_error(
+                    "the short flag cannot be '-'.");
+
             std::tie(std::ignore, inserted) = _sorted_by_flag.emplace(
                 std::string("-") + optref.shrt(), std::ref(optref));
             if (!inserted)
@@ -1264,6 +1323,10 @@ meta::meta(OptionTs &&...options) :
 
 auto meta::opts() -> std::vector<_detail::anyopt> & { return _opts; }
 
+auto meta::ignored_args() -> std::optional<std::reference_wrapper<ignored>> {
+    return _ignored_args;
+}
+
 auto meta::required_opts()
     -> const std::vector<std::reference_wrapper<_detail::anyopt>> & {
     return _required_opts;
@@ -1280,6 +1343,18 @@ auto meta::query(const std::string &flag)
 inline bool meta::help() const { return _help; }
 
 inline bool meta::version() const { return _version; }
+
+template <typename FirstOptionT, typename... OptionTs>
+inline void meta::_unpack_opts(FirstOptionT &&first, OptionTs &&...options) {
+    if constexpr (std::is_same_v<
+                      std::decay_t<FirstOptionT>,
+                      std::reference_wrapper<ignored>>)
+        _ignored_args = std::forward<FirstOptionT>(first);
+    else
+        _opts.emplace_back(_detail::anyopt(std::forward<FirstOptionT>(first)));
+
+    if constexpr (sizeof...(OptionTs)) _unpack_opts(options...);
+}
 
 template <args_group ArgsGroupT>
 ArgsGroupT greet(int argc, char *argv[]) {
@@ -1351,6 +1426,15 @@ ArgsGroupT greet(int argc, char *argv[]) {
             } break;
             case _detail::ARGUMENT:
                 printer.unexpected_argument(argv[0]);
+                break;
+            case _detail::ENDARG:
+                _detail::remove_one_arg(argc, argv);
+                while (argc) {
+                    auto ignored_args = m.ignored_args();
+                    if (ignored_args)
+                        ignored_args.value().get().emplace_back(argv[0]);
+                    _detail::remove_one_arg(argc, argv);
+                }
                 break;
             default:
                 std::unreachable();
