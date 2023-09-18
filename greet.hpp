@@ -59,18 +59,13 @@ namespace _detail {
     };
 
     inline size_t argtype(const char *arg) {
-        size_t length = std::strlen(arg);
-        if (length >= 2)
-            if (arg[0] == '-') {
-                if (arg[1] == '-')
-                    if (length == 2)
-                        return ENDARG;
-                    else
-                        return LONG;
-                else
-                    return SHORT;
-            }
-
+        std::string_view str(arg);
+        if (str == std::string_view("--"))
+            return ENDARG;
+        if (str.starts_with("--"))
+            return LONG;
+        if (str.starts_with("-"))
+            return SHORT;
         return ARGUMENT;
     };
 
