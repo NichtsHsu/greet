@@ -68,7 +68,7 @@ struct Args: public greet::information {
     // 不声明任何构造函数
 
     // 程序版本号，会在 '-V' 或 '--version' 时打印
-    std::string version() override { return "greet v0.1.0"; }
+    std::string version() override { return "greet v0.1.1"; }
 
     // 程序简介, 会在 '-h' 或 '--help' 时打印
     std::string description() override { return "Greet with a person"; }

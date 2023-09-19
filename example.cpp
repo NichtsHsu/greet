@@ -8,7 +8,7 @@ struct Args : public greet::information {
     std::vector<std::string> places;
     greet::ignored others;
 
-    std::string version() override { return "greet v0.1.0"; }
+    std::string version() override { return "greet v0.1.1"; }
     std::string description() override { return "greet with a person"; }
     greet::meta genmeta() override {
         return {

@@ -68,7 +68,7 @@ struct Args: public greet::information {
     // don't declare any constructors
 
     // version of program, will be printed at '-V' or '--version'
-    std::string version() override { return "greet v0.1.0"; }
+    std::string version() override { return "greet v0.1.1"; }
 
     // description of program, will be printed at '-h' or '--help'
     std::string description() override { return "Greet with a person"; }
