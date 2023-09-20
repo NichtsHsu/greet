@@ -1,0 +1,15 @@
+I will greet Neely Kaeden
+He/She is 18 years old
+We have greeted before
+We should greet 5 times
+We may greet at 4 places:
+	new york
+	-chicago
+	--
+	-san-diego
+Other things:
+	test-double-hyphen
+	-short
+	--long
+	--
+	after-anthor-double-hyphen

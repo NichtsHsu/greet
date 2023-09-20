@@ -1,0 +1,12 @@
+greet with a person
+
+Usage: example [OPTIONS] --name <NAME>
+
+Options:
+  -n, --name <NAME>    Name of the person to greet [REQUIRED]
+      --age <AGE>      Age of the person to greet [default: 18]
+  -g                   Have greeted before
+  -t                   How many times you want to greet
+  -p, --place <PLACE>  Where to greet
+  -h, --help           Print help
+  -V, --version        Print version

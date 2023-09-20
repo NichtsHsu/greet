@@ -21,6 +21,15 @@ jobs:
     - name: Build
       run: |
         g++-13 example.cpp -std=c++23 -o example
-    - name: Run
-      run: |
-        ./example -h
+    - name: Test Help Output
+      uses: GuillaumeFalourd/assert-command-line-output@v2.2
+      with:
+        command_line: ./example -h
+        assert_file_path: tests/expected/gh_action@test_help_output.txt
+    - name: Test Parse Result
+      uses: GuillaumeFalourd/assert-command-line-output@v2.2
+      with:
+        command_line: './example -n "Neely Kaeden" --place="new york" -p -chicago
+          -p -- -tgttttp=-san-diego -- test-double-hyphen -short --long
+          -- after-anthor-double-hyphen'
+        assert_file_path: tests/expected/gh_action@test_parser_result.txt
