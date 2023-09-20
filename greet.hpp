@@ -60,12 +60,9 @@ namespace _detail {
 
     inline size_t argtype(const char *arg) {
         std::string_view str(arg);
-        if (str == std::string_view("--"))
-            return ENDARG;
-        if (str.starts_with("--"))
-            return LONG;
-        if (str.starts_with("-"))
-            return SHORT;
+        if (str == std::string_view("--")) return ENDARG;
+        if (str.starts_with("--")) return LONG;
+        if (str.starts_with("-")) return SHORT;
         return ARGUMENT;
     };
 
@@ -1268,12 +1265,13 @@ meta::meta(OptionTs &&...options) :
     _ignored_args(std::nullopt),
     _required_opts{},
     _sorted_by_flag{} {
+    constexpr size_t ignored_opt_nums = _detail::
+        type_positions_t<std::reference_wrapper<ignored>, OptionTs...>::size();
     static_assert(
-        _detail::type_positions_t<
-            std::reference_wrapper<ignored>,
-            OptionTs...>::size() <= 1,
+        ignored_opt_nums <= 1,
         "can only provide 0 or 1 `greet::ignored` option!");
 
+    _opts.reserve(sizeof...(OptionTs) + 2 - ignored_opt_nums);
     _unpack_opts(std::forward<OptionTs>(options)...);
 
     _opts.emplace_back(
@@ -1422,15 +1420,16 @@ ArgsGroupT greet(int argc, char *argv[]) {
             case _detail::ARGUMENT:
                 printer.unexpected_argument(argv[0]);
                 break;
-            case _detail::ENDARG:
+            case _detail::ENDARG: {
                 _detail::remove_one_arg(argc, argv);
+                auto ignored_args = m.ignored_args();
+                if (ignored_args) ignored_args.value().get().reserve(argc);
                 while (argc) {
-                    auto ignored_args = m.ignored_args();
                     if (ignored_args)
                         ignored_args.value().get().emplace_back(argv[0]);
                     _detail::remove_one_arg(argc, argv);
                 }
-                break;
+            } break;
             default:
                 std::unreachable();
         }
