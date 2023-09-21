@@ -775,6 +775,7 @@ namespace _detail {
         _allow_hyphen = &anyopt::_allow_hyphen_inner<OptT>;
         _def = &anyopt::_def_inner<OptT>;
         _set = &anyopt::_set_inner<OptT>;
+        _set_flag = false;
     }
 
     anyopt::anyopt(anyopt &&other) :
@@ -787,6 +788,7 @@ namespace _detail {
         _allow_hyphen = other._allow_hyphen;
         _def = other._def;
         _set = other._set;
+        _set_flag = other._set_flag;
     };
 
     char anyopt::shrt() const { return (this->*_shrt)(); }
