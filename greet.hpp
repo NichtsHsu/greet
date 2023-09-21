@@ -919,7 +919,7 @@ class meta {
     template <typename... OptionTs>
     meta(OptionTs &&...options);
     meta(const meta &) = delete;
-    meta(meta &&) = default;
+    meta(meta &&) = delete;
 
     auto opts() -> std::vector<_detail::anyopt> &;
     auto ignored_args() -> std::optional<std::reference_wrapper<ignored>>;
