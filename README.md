@@ -8,9 +8,9 @@ Inspired by [clap](https://github.com/clap-rs/clap) and [glaze](https://github.c
 
 Get the name from [clap's documentation](https://docs.rs/clap/latest/clap/#example):
 
-> -n, --name <NAME>    Name of the person to **greet**
+> -n, --name \<NAME>    Name of the person to **greet**
 >
-> -c, --count <COUNT>  Number of times to **greet** [default: 1]
+> -c, --count \<COUNT>  Number of times to **greet** [default: 1]
 >
 > -h, --help           Print help
 >
