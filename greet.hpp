@@ -1344,11 +1344,12 @@ inline void meta::_unpack_opts(FirstOptionT &&first, OptionTs &&...options) {
     if constexpr (std::is_same_v<
                       std::decay_t<FirstOptionT>,
                       std::reference_wrapper<ignored>>)
-        _ignored_args = std::forward<FirstOptionT>(first);
+        _ignored_args = first;
     else
         _opts.emplace_back(_detail::anyopt(std::forward<FirstOptionT>(first)));
 
-    if constexpr (sizeof...(OptionTs)) _unpack_opts(options...);
+    if constexpr (sizeof...(OptionTs))
+        _unpack_opts(std::forward<OptionTs>(options)...);
 }
 
 template <args_group ArgsGroupT>
