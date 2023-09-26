@@ -122,9 +122,9 @@ struct information {
 class counter {
   public:
     counter();
-    counter(const counter &other);
+    counter(const counter &other) = default;
     counter(counter &&other);
-    counter &operator=(const counter &other);
+    counter &operator=(const counter &other) = default;
     counter &operator=(counter &&other);
 
     counter &operator++();
@@ -196,8 +196,6 @@ template <typename OptT>
 concept option = std::semiregular<OptT> && string_convertable<OptT>;
 
 namespace _detail {
-    class anyopt;
-
     enum {
         NORMAL,
         BOOLEAN,
@@ -226,14 +224,37 @@ namespace _detail {
     template <option OptT>
     struct opt_type<std::vector<OptT>> {
         static constexpr size_t type = VECTOR;
-        using realopt = OptT;
     };
 
     template <typename OptT>
     constexpr size_t opt_type_v = opt_type<OptT>::type;
 
-    template <typename OptT>
-    using realopt_t = typename opt_type<OptT>::realopt;
+    class opt_base {
+      public:
+        opt_base();
+        opt_base(const opt_base &) = default;
+        opt_base(opt_base &&other);
+        virtual ~opt_base() = default;
+        opt_base &operator=(const opt_base &) = default;
+        opt_base &operator=(opt_base &&other);
+
+        inline char get_shrt() const;
+        inline const std::string &get_lng() const;
+        inline const std::string &get_about() const;
+        inline bool already_set() const;
+        virtual const std::string &get_argname() const;
+        virtual bool get_required() const;
+        virtual bool get_allow_hyphen() const;
+        virtual std::string get_def() const;
+        virtual std::errc set(const char *value = nullptr) = 0;
+        virtual bool need_argument() const;
+
+      protected:
+        char _shrt;
+        std::string _lng;
+        std::string _about;
+        bool _set_flag;
+    };
 
     template <typename OptT>
     class opt_wrapper {
@@ -241,7 +262,7 @@ namespace _detail {
     };
 
     template <option OptT>
-    class opt_wrapper<OptT> {
+    class opt_wrapper<OptT> : public opt_base {
       public:
         opt_wrapper(OptT &optref);
         opt_wrapper(const opt_wrapper &) = default;
@@ -270,19 +291,21 @@ namespace _detail {
         opt_wrapper &&def(DefT &&...value) &&;
 
       private:
-        friend anyopt;
+        const std::string &get_argname() const override;
+        bool get_required() const override;
+        bool get_allow_hyphen() const override;
+        std::string get_def() const override;
+        std::errc set(const char *value = nullptr) override;
+        bool need_argument() const override;
 
         std::reference_wrapper<OptT> _optref;
         bool _required;
         bool _allow_hyphen;
-        char _shrt;
-        std::string _lng;
-        std::string _about;
         std::string _argname;
     };
 
     template <>
-    class opt_wrapper<bool> {
+    class opt_wrapper<bool> : public opt_base {
       public:
         opt_wrapper(bool &optref);
         opt_wrapper(const opt_wrapper &) = default;
@@ -299,16 +322,13 @@ namespace _detail {
         opt_wrapper &&about(const std::string &value) &&;
 
       private:
-        friend anyopt;
+        std::errc set(const char *value = nullptr) override;
 
         std::reference_wrapper<bool> _optref;
-        char _shrt;
-        std::string _lng;
-        std::string _about;
     };
 
     template <>
-    class opt_wrapper<counter> {
+    class opt_wrapper<counter> : public opt_base {
       public:
         opt_wrapper(counter &optref);
         opt_wrapper(const opt_wrapper &) = default;
@@ -325,16 +345,13 @@ namespace _detail {
         opt_wrapper &&about(const std::string &value) &&;
 
       private:
-        friend anyopt;
+        std::errc set(const char *value = nullptr) override;
 
         std::reference_wrapper<counter> _optref;
-        char _shrt;
-        std::string _lng;
-        std::string _about;
     };
 
     template <option OptT>
-    class opt_wrapper<std::vector<OptT>> {
+    class opt_wrapper<std::vector<OptT>> : public opt_base {
       public:
         opt_wrapper(std::vector<OptT> &optref);
         opt_wrapper(const opt_wrapper &) = default;
@@ -355,13 +372,13 @@ namespace _detail {
         opt_wrapper &&allow_hyphen() &&;
 
       private:
-        friend anyopt;
+        const std::string &get_argname() const override;
+        bool get_allow_hyphen() const override;
+        std::errc set(const char *value = nullptr) override;
+        bool need_argument() const override;
 
         std::reference_wrapper<std::vector<OptT>> _optref;
         bool _allow_hyphen;
-        char _shrt;
-        std::string _lng;
-        std::string _about;
         std::string _argname;
     };
 
@@ -372,7 +389,7 @@ namespace _detail {
         template <typename OptT>
         anyopt(opt_wrapper<OptT> &&origin);
         anyopt(const anyopt &other) = delete;
-        anyopt(anyopt &&other);
+        anyopt(anyopt &&other) = default;
 
         const size_t opttype;
 
@@ -388,69 +405,73 @@ namespace _detail {
         inline bool need_argument() const;
 
       private:
-        template <typename OptT>
-        inline void _initialize();
-
-        template <typename OptT>
-        char _shrt_inner() const;
-        template <typename OptT>
-        const std::string &_lng_inner() const;
-        template <typename OptT>
-        const std::string &_about_inner() const;
-        template <typename OptT>
-        const std::string &_argname_inner() const;
-        template <typename OptT>
-        bool _required_inner() const;
-        template <typename OptT>
-        bool _allow_hyphen_inner() const;
-        template <typename OptT>
-        std::string _def_inner() const;
-        template <typename OptT>
-        std::errc _set_inner(const char *value);
-
-        char (anyopt::*_shrt)() const;
-        const std::string &(anyopt::*_lng)() const;
-        const std::string &(anyopt::*_about)() const;
-        const std::string &(anyopt::*_argname)() const;
-        bool (anyopt::*_required)() const;
-        bool (anyopt::*_allow_hyphen)() const;
-        std::string (anyopt::*_def)() const;
-        std::errc (anyopt::*_set)(const char *);
-        std::unique_ptr<void, void (*)(void *)> _origin;
-
-        bool _set_flag;
-        const std::string _empty_string;
+        std::unique_ptr<opt_base> _origin;
     };
+
+    const std::string &opt_base::get_argname() const {
+        static const std::string empty;
+        return empty;
+    }
+
+    opt_base::opt_base() : _shrt{'\0'}, _lng{}, _about{}, _set_flag{false} {}
+
+    opt_base::opt_base(opt_base &&other) :
+        _shrt{other._shrt},
+        _lng(std::move(other._lng)),
+        _about(std::move(other._about)),
+        _set_flag(other._set_flag) {
+        other._shrt = '\0';
+        other._set_flag = false;
+    }
+
+    opt_base &opt_base::operator=(opt_base &&other) {
+        _shrt = other._shrt;
+        other._shrt = '\0';
+        _lng = std::move(other._lng);
+        _about = std::move(other._about);
+        _set_flag = other._set_flag;
+        other._set_flag = false;
+        return *this;
+    }
+
+    char opt_base::get_shrt() const { return _shrt; }
+
+    const std::string &opt_base::get_lng() const { return _lng; }
+
+    const std::string &opt_base::get_about() const { return _about; }
+
+    bool opt_base::already_set() const { return _set_flag; }
+
+    bool opt_base::get_required() const { return false; }
+
+    bool opt_base::get_allow_hyphen() const { return false; }
+
+    std::string opt_base::get_def() const { return {}; }
+
+    bool opt_base::need_argument() const { return false; }
 
     template <option OptT>
     opt_wrapper<OptT>::opt_wrapper(OptT &optref) :
+        opt_base{},
         _optref{optref},
         _required{false},
         _allow_hyphen{false},
-        _shrt{'\0'},
-        _lng{},
-        _about{},
         _argname{} {}
 
     template <option OptT>
     opt_wrapper<OptT>::opt_wrapper(opt_wrapper &&other) :
-        _optref(other._optref) {
+        opt_base(std::move(other)), _optref(other._optref) {
         _required = other._required;
         _allow_hyphen = other._allow_hyphen;
-        _shrt = other._shrt;
-        _lng = std::move(other._lng);
-        _about = std::move(other._about);
         _argname = std::move(other._argname);
     }
 
     template <option OptT>
     opt_wrapper<OptT> &opt_wrapper<OptT>::operator=(opt_wrapper &&other) {
+        opt_base::operator=(std::move(other));
         _optref = other.optref;
         _required = other._required;
         _allow_hyphen = other._allow_hyphen;
-        _shrt = other._shrt;
-        _lng = std::move(other._lng);
-        _about = std::move(other._about);
         _argname = std::move(other._argname);
         return *this;
     }
@@ -544,21 +565,54 @@ namespace _detail {
         return std::move(*this);
     }
 
-    opt_wrapper<bool>::opt_wrapper(bool &optref) :
-        _optref(optref), _shrt('\0'), _lng{}, _about{} {}
-
-    opt_wrapper<bool>::opt_wrapper(opt_wrapper &&other) :
-        _optref(other._optref) {
-        _shrt = other._shrt;
-        _lng = std::move(other._lng);
-        _about = std::move(other._about);
+    template <option OptT>
+    const std::string &opt_wrapper<OptT>::get_argname() const {
+        return _argname;
     }
 
+    template <option OptT>
+    bool opt_wrapper<OptT>::get_required() const {
+        return _required;
+    }
+
+    template <option OptT>
+    bool opt_wrapper<OptT>::get_allow_hyphen() const {
+        return _allow_hyphen;
+    }
+
+    template <option OptT>
+    std::string opt_wrapper<OptT>::get_def() const {
+        return string_converter<OptT>::to_str(_optref.get());
+    }
+
+    template <option OptT>
+    std::errc opt_wrapper<OptT>::set(const char *value) {
+        std::expected<OptT, std::errc> expt =
+            string_converter<OptT>::from_str(value);
+        if (expt) {
+            _optref.get() = std::move(expt.value());
+            _set_flag = true;
+        } else {
+            return expt.error();
+        }
+
+        return {};
+    }
+
+    template <option OptT>
+    bool opt_wrapper<OptT>::need_argument() const {
+        return true;
+    }
+
+    opt_wrapper<bool>::opt_wrapper(bool &optref) :
+        opt_base{}, _optref(optref) {}
+
+    opt_wrapper<bool>::opt_wrapper(opt_wrapper &&other) :
+        opt_base{std::move(other)}, _optref(other._optref) {}
+
     opt_wrapper<bool> &opt_wrapper<bool>::operator=(opt_wrapper &&other) {
+        opt_base::operator=(std::move(other));
         _optref = other._optref;
-        _shrt = other._shrt;
-        _lng = std::move(other._lng);
-        _about = std::move(other._about);
         return *this;
     }
 
@@ -592,23 +646,22 @@ namespace _detail {
         return std::move(*this);
     }
 
-    opt_wrapper<counter>::opt_wrapper(counter &optref) :
-        _optref(optref), _shrt('\0'), _lng{}, _about{} {}
-
-    opt_wrapper<counter>::opt_wrapper(opt_wrapper &&other) :
-        _optref(other._optref) {
-        _shrt = other._shrt;
-        other._shrt = '\0';
-        _lng = std::move(other._lng);
-        _about = std::move(other._about);
+    std::errc opt_wrapper<bool>::set(const char *value) {
+        (void)value;
+        _optref.get() = true;
+        _set_flag = true;
+        return {};
     }
 
+    opt_wrapper<counter>::opt_wrapper(counter &optref) :
+        opt_base{}, _optref(optref) {}
+
+    opt_wrapper<counter>::opt_wrapper(opt_wrapper &&other) :
+        opt_base{std::move(other)}, _optref(other._optref) {}
+
     opt_wrapper<counter> &opt_wrapper<counter>::operator=(opt_wrapper &&other) {
+        opt_base::operator=(std::move(other));
         _optref = other._optref;
-        _shrt = other._shrt;
-        other._shrt = '\0';
-        _lng = std::move(other._lng);
-        _about = std::move(other._about);
         return *this;
     }
 
@@ -646,33 +699,29 @@ namespace _detail {
         return std::move(*this);
     }
 
+    std::errc opt_wrapper<counter>::set(const char *value) {
+        (void)value;
+        ++_optref.get();
+        return {};
+    }
+
     template <option OptT>
     opt_wrapper<std::vector<OptT>>::opt_wrapper(std::vector<OptT> &optref) :
-        _optref(optref),
-        _allow_hyphen(false),
-        _shrt('\0'),
-        _lng{},
-        _about{},
-        _argname{} {}
+        opt_base{}, _optref(optref), _allow_hyphen(false), _argname{} {}
 
     template <option OptT>
     opt_wrapper<std::vector<OptT>>::opt_wrapper(opt_wrapper &&other) :
-        _optref(other._optref) {
+        opt_base(std::move(other)), _optref(other._optref) {
         _allow_hyphen = other._allow_hyphen;
-        _shrt = other._shrt;
-        _lng = std::move(other._lng);
-        _about = std::move(other._about);
         _argname = std::move(other._argname);
     }
 
     template <option OptT>
     opt_wrapper<std::vector<OptT>> &opt_wrapper<std::vector<OptT>>::operator=(
         opt_wrapper &&other) {
+        opt_base::operator=(std::move(other));
         _optref = other._optref;
         _allow_hyphen = other._allow_hyphen;
-        _shrt = other._shrt;
-        _lng = std::move(other._lng);
-        _about = std::move(other._about);
         _argname = std::move(other._argname);
         return *this;
     }
@@ -747,161 +796,71 @@ namespace _detail {
         return std::move(*this);
     }
 
+    template <option OptT>
+    const std::string &opt_wrapper<std::vector<OptT>>::get_argname() const {
+        return _argname;
+    }
+
+    template <option OptT>
+    bool opt_wrapper<std::vector<OptT>>::get_allow_hyphen() const {
+        return _allow_hyphen;
+    }
+
+    template <option OptT>
+    std::errc opt_wrapper<std::vector<OptT>>::set(const char *value) {
+        std::expected<OptT, std::errc> expt =
+            string_converter<OptT>::from_str(value);
+
+        if (expt)
+            _optref.get().emplace_back(std::move(expt.value()));
+        else
+            return expt.error();
+
+        return {};
+    }
+
+    template <option OptT>
+    bool opt_wrapper<std::vector<OptT>>::need_argument() const {
+        return true;
+    }
+
     template <typename OptT>
     anyopt::anyopt(const opt_wrapper<OptT> &origin) :
-        opttype(opt_type_v<OptT>),
-        _origin(new opt_wrapper<OptT>(origin), [](void *ptr) {
-            delete reinterpret_cast<opt_wrapper<OptT> *>(ptr);
-        }) {
-        _initialize<OptT>();
-    }
+        opttype(opt_type_v<OptT>), _origin(new opt_wrapper<OptT>(origin)) {}
 
     template <typename OptT>
     anyopt::anyopt(opt_wrapper<OptT> &&origin) :
         opttype(opt_type_v<OptT>),
-        _origin(new opt_wrapper<OptT>(std::move(origin)), [](void *ptr) {
-            delete reinterpret_cast<opt_wrapper<OptT> *>(ptr);
-        }) {
-        _initialize<OptT>();
+        _origin(new opt_wrapper<OptT>(std::move(origin))) {}
+
+    char anyopt::shrt() const { return _origin.get()->get_shrt(); }
+
+    const std::string &anyopt::lng() const { return _origin.get()->get_lng(); }
+
+    const std::string &anyopt::about() const {
+        return _origin.get()->get_about();
     }
 
-    template <typename OptT>
-    void anyopt::_initialize() {
-        _shrt = &anyopt::_shrt_inner<OptT>;
-        _lng = &anyopt::_lng_inner<OptT>;
-        _about = &anyopt::_about_inner<OptT>;
-        _argname = &anyopt::_argname_inner<OptT>;
-        _required = &anyopt::_required_inner<OptT>;
-        _allow_hyphen = &anyopt::_allow_hyphen_inner<OptT>;
-        _def = &anyopt::_def_inner<OptT>;
-        _set = &anyopt::_set_inner<OptT>;
-        _set_flag = false;
+    const std::string &anyopt::argname() const {
+        return _origin.get()->get_argname();
     }
 
-    anyopt::anyopt(anyopt &&other) :
-        opttype(other.opttype), _origin(std::move(other._origin)) {
-        _shrt = other._shrt;
-        _lng = other._lng;
-        _about = other._about;
-        _argname = other._argname;
-        _required = other._required;
-        _allow_hyphen = other._allow_hyphen;
-        _def = other._def;
-        _set = other._set;
-        _set_flag = other._set_flag;
-    };
+    bool anyopt::required() const { return _origin.get()->get_required(); }
 
-    char anyopt::shrt() const { return (this->*_shrt)(); }
+    bool anyopt::allow_hyphen() const {
+        return _origin.get()->get_allow_hyphen();
+    }
 
-    const std::string &anyopt::lng() const { return (this->*_lng)(); }
+    std::string anyopt::def() const { return _origin.get()->get_def(); }
 
-    const std::string &anyopt::about() const { return (this->*_about)(); }
+    std::errc anyopt::set(const char *value) {
+        return _origin.get()->set(value);
+    }
 
-    const std::string &anyopt::argname() const { return (this->*_argname)(); }
-
-    bool anyopt::required() const { return (this->*_required)(); }
-
-    bool anyopt::allow_hyphen() const { return (this->*_allow_hyphen)(); }
-
-    std::string anyopt::def() const { return (this->*_def)(); }
-
-    std::errc anyopt::set(const char *value) { return (this->*_set)(value); }
-
-    bool anyopt::already_set() const { return _set_flag; }
+    bool anyopt::already_set() const { return _origin.get()->already_set(); }
 
     inline bool anyopt::need_argument() const {
-        return opttype == NORMAL || opttype == VECTOR;
-    }
-
-    template <typename OptT>
-    char anyopt::_shrt_inner() const {
-        return reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())->_shrt;
-    }
-
-    template <typename OptT>
-    const std::string &anyopt::_lng_inner() const {
-        return reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())->_lng;
-    }
-
-    template <typename OptT>
-    const std::string &anyopt::_about_inner() const {
-        return reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())->_about;
-    }
-
-    template <typename OptT>
-    const std::string &anyopt::_argname_inner() const {
-        constexpr size_t type = opt_type_v<OptT>;
-
-        if constexpr (type == NORMAL || type == VECTOR)
-            return reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())
-                ->_argname;
-        else
-            return _empty_string;
-    }
-
-    template <typename OptT>
-    bool anyopt::_required_inner() const {
-        if constexpr (opt_type_v<OptT> == NORMAL)
-            return reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())
-                ->_required;
-        else
-            return false;
-    }
-
-    template <typename OptT>
-    bool anyopt::_allow_hyphen_inner() const {
-        constexpr size_t type = opt_type_v<OptT>;
-
-        if constexpr (type == NORMAL || type == VECTOR)
-            return reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())
-                ->_allow_hyphen;
-        else
-            return false;
-    }
-
-    template <typename OptT>
-    std::string anyopt::_def_inner() const {
-        if constexpr (opt_type_v<OptT> == NORMAL)
-            return string_converter<OptT>::to_str(
-                reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())
-                    ->_optref.get());
-        else
-            return {};
-    }
-
-    template <typename OptT>
-    std::errc anyopt::_set_inner(const char *value) {
-        constexpr size_t type = opt_type_v<OptT>;
-
-        if constexpr (type == NORMAL) {
-            std::expected<OptT, std::errc> expt =
-                string_converter<OptT>::from_str(value);
-            if (expt) {
-                reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())
-                    ->_optref.get() = std::move(expt.value());
-                _set_flag = true;
-            } else {
-                return expt.error();
-            }
-        } else if constexpr (type == BOOLEAN) {
-            reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())
-                ->_optref.get() = true;
-            _set_flag = true;
-        } else if constexpr (type == COUNTER) {
-            ++(reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())
-                   ->_optref.get());
-        } else if constexpr (type == VECTOR) {
-            std::expected<realopt_t<OptT>, std::errc> expt =
-                string_converter<realopt_t<OptT>>::from_str(value);
-            if (expt)
-                reinterpret_cast<opt_wrapper<OptT> *>(_origin.get())
-                    ->_optref.get()
-                    .emplace_back(std::move(expt.value()));
-            else
-                return expt.error();
-        }
-
-        return std::errc{};
+        return _origin.get()->need_argument();
     }
 
     std::string get_argname(const greet::_detail::anyopt &optref) {
@@ -1151,16 +1110,9 @@ auto opt(OptT &optref) {
 
 counter::counter() : _counter{0} {}
 
-counter::counter(const counter &other) : _counter{other._counter} {}
-
 counter::counter(counter &&other) {
     _counter = other._counter;
     other._counter = 0;
-}
-
-counter &counter::operator=(const counter &other) {
-    _counter = other._counter;
-    return *this;
 }
 
 counter &counter::operator=(counter &&other) {
