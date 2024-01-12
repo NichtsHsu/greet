@@ -18,7 +18,7 @@
 
 ## 坏消息
 
-* Greet 使用 C++23 特性, 所以你需要最低 `gcc-13` 或者 `clang-17` 来编译 😈
+* Greet 使用 C++23 特性, 所以你需要最低 `gcc-13`，`clang-17` 或 Visual Studio 2022 来编译 😈
 * 我从来没有考虑过任何性能优化 😱
 * 你的 IDE/LSP 可能会报很多错，即使代码可以正常编译 😭
 
@@ -38,6 +38,8 @@
 g++ example.cpp -std=c++23 -o example # or
 clang example.cpp -std=c++2b -stdlib=libc++ -o example
 ```
+
+对于 MSVC（即 Visual Studio 2022），请使用 `/std:c++latest`。
 
 ## Greet 规则
 

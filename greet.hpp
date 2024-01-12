@@ -155,34 +155,83 @@ concept string_convertable = requires(OptT t, const char *str) {
 
 template <_detail::integer OptT>
 struct string_converter<OptT> {
-    static auto from_str(const char *str) -> std::expected<OptT, std::errc>;
-    static std::string to_str(const OptT &value);
+    static auto from_str(const char *str) -> std::expected<OptT, std::errc> {
+        OptT v{};
+        const char *end = _detail::strend(str);
+        std::from_chars_result result;
+        if (str[0] == '0')
+            if (str[1] == 'x')
+                result = std::from_chars(str + 2, end, v, 16);
+            else
+                result = std::from_chars(str + 1, end, v, 8);
+        else
+            result = std::from_chars(str, end, v);
+        auto [ptr, ec] = result;
+        if (ec == std::errc{})
+            if (ptr == end)
+                return v;
+            else
+                return std::unexpected(std::errc::invalid_argument);
+        else
+            return std::unexpected(ec);
+    }
+
+    static std::string to_str(const OptT &value) {
+        return std::to_string(value);
+    }
 };
 
 template <_detail::float_pointer OptT>
 struct string_converter<OptT> {
-    static auto from_str(const char *str) -> std::expected<OptT, std::errc>;
-    static std::string to_str(const OptT &value);
+    static auto from_str(const char *str) -> std::expected<OptT, std::errc> {
+        OptT v{};
+        const char *end = _detail::strend(str);
+        auto [ptr, ec] = std::from_chars(str, end, v);
+        if (ec == std::errc{})
+            if (ptr == end)
+                return v;
+            else
+                return std::unexpected(std::errc::invalid_argument);
+        else
+            return std::unexpected(ec);
+    }
+
+    static std::string to_str(const OptT &value) {
+        return std::to_string(value);
+    }
 };
 
 template <>
 struct string_converter<char> {
-    static auto from_str(const char *str) -> std::expected<char, std::errc>;
-    static std::string to_str(const char &value);
+    static auto from_str(const char *str) -> std::expected<char, std::errc> {
+        if (std::strlen(str) != 1)
+            return std::unexpected(std::errc::invalid_argument);
+        return *str;
+    }
+
+    static std::string to_str(const char &value) {
+        return std::string(1, value);
+    }
 };
 
 template <>
 struct string_converter<const char *> {
     static auto from_str(const char *str)
-        -> std::expected<const char *, std::errc>;
-    static std::string to_str(const char *const &value);
+        -> std::expected<const char *, std::errc> {
+        return str;
+    }
+
+    static std::string to_str(const char *const &value) { return value; }
 };
 
 template <>
 struct string_converter<std::string> {
     static auto from_str(const char *str)
-        -> std::expected<std::string, std::errc>;
-    static std::string to_str(const std::string &value);
+        -> std::expected<std::string, std::errc> {
+        return std::string(str);
+    }
+
+    static std::string to_str(const std::string &value) { return value; }
 };
 
 template <typename ArgsGroupT>
@@ -282,11 +331,11 @@ namespace _detail {
         opt_wrapper &allow_hyphen() &;
         opt_wrapper &&allow_hyphen() &&;
         template <typename... DefT>
-            requires std::constructible_from<OptT, DefT...>
-        opt_wrapper &def(DefT &&...value) &;
+        opt_wrapper &def(DefT &&...value) &
+            requires std::constructible_from<OptT, DefT...>;
         template <typename... DefT>
-            requires std::constructible_from<OptT, DefT...>
-        opt_wrapper &&def(DefT &&...value) &&;
+        opt_wrapper &&def(DefT &&...value) &&
+            requires std::constructible_from<OptT, DefT...>;
 
       private:
         const std::string &get_argname() const override;
@@ -549,16 +598,18 @@ namespace _detail {
 
     template <option OptT>
     template <typename... DefT>
+    opt_wrapper<OptT> &opt_wrapper<OptT>::def(DefT &&...value) &
         requires std::constructible_from<OptT, DefT...>
-    opt_wrapper<OptT> &opt_wrapper<OptT>::def(DefT &&...value) & {
+    {
         _optref.get() = OptT(std::forward<DefT>(value)...);
         return *this;
     }
 
     template <option OptT>
     template <typename... DefT>
+    opt_wrapper<OptT> &&opt_wrapper<OptT>::def(DefT &&...value) &&
         requires std::constructible_from<OptT, DefT...>
-    opt_wrapper<OptT> &&opt_wrapper<OptT>::def(DefT &&...value) && {
+    {
         _optref.get() = OptT(std::forward<DefT>(value)...);
         return std::move(*this);
     }
@@ -1131,83 +1182,6 @@ counter counter::operator++(int) {
 }
 
 counter::operator size_t() { return _counter; }
-
-template <_detail::integer OptT>
-auto string_converter<OptT>::from_str(const char *str)
-    -> std::expected<OptT, std::errc> {
-    OptT v{};
-    const char *end = _detail::strend(str);
-    std::from_chars_result result;
-    if (str[0] == '0')
-        if (str[1] == 'x')
-            result = std::from_chars(str + 2, end, v, 16);
-        else
-            result = std::from_chars(str + 1, end, v, 8);
-    else
-        result = std::from_chars(str, end, v);
-    auto [ptr, ec] = result;
-    if (ec == std::errc{})
-        if (ptr == end)
-            return v;
-        else
-            return std::unexpected(std::errc::invalid_argument);
-    else
-        return std::unexpected(ec);
-}
-
-template <_detail::integer OptT>
-std::string string_converter<OptT>::to_str(const OptT &value) {
-    return std::to_string(value);
-}
-
-template <_detail::float_pointer OptT>
-auto string_converter<OptT>::from_str(const char *str)
-    -> std::expected<OptT, std::errc> {
-    OptT v{};
-    const char *end = _detail::strend(str);
-    auto [ptr, ec] = std::from_chars(str, end, v);
-    if (ec == std::errc{})
-        if (ptr == end)
-            return v;
-        else
-            return std::unexpected(std::errc::invalid_argument);
-    else
-        return std::unexpected(ec);
-}
-
-template <_detail::float_pointer OptT>
-std::string string_converter<OptT>::to_str(const OptT &value) {
-    return std::to_string(value);
-}
-
-auto string_converter<char>::from_str(const char *str)
-    -> std::expected<char, std::errc> {
-    if (std::strlen(str) != 1)
-        return std::unexpected(std::errc::invalid_argument);
-    return *str;
-}
-
-std::string string_converter<char>::to_str(const char &value) {
-    return std::string(1, value);
-}
-
-auto string_converter<const char *>::from_str(const char *str)
-    -> std::expected<const char *, std::errc> {
-    return str;
-}
-
-std::string string_converter<const char *>::to_str(const char *const &value) {
-    return value;
-}
-
-auto string_converter<std::string>::from_str(const char *str)
-    -> std::expected<std::string, std::errc> {
-    return std::string(str);
-}
-
-std::string string_converter<std::string>::to_str(const std::string &value) {
-    return value;
-}
 
 template <typename... OptionTs>
 meta::meta(OptionTs &&...options) :

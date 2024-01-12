@@ -18,7 +18,7 @@ Get the name from [clap's documentation](https://docs.rs/clap/latest/clap/#examp
 
 ## Bad news
 
-* Greet uses C++23 features, so you need at least `gcc-13` or `clang-17` to compile it 😈
+* Greet uses C++23 features, so you need at least `gcc-13`, `clang-17` or Visual Studio 2022 to compile it 😈
 * I bet I haven't considered any performance optimizations 😱
 * Your IDE/LSP may throw a lot of errors even though the code was compiled successfully 😭
 
@@ -38,6 +38,8 @@ The build command is simple:
 g++ example.cpp -std=c++23 -o example # or
 clang example.cpp -std=c++2b -stdlib=libc++ -o example
 ```
+
+For MSVC(Visual Studio 2022), please select `/std:c++latest`.
 
 ## Rule of greet
 
