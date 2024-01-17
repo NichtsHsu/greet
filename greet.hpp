@@ -21,6 +21,9 @@
  * SOFTWARE.
  */
 
+#ifndef GREET_HPP
+#define GREET_HPP
+
 #include <algorithm>
 #include <charconv>
 #include <concepts>
@@ -1384,3 +1387,5 @@ ArgsGroupT greet(int argc, char *argv[]) {
 };
 
 }  // namespace greet
+
+#endif
