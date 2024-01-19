@@ -8,6 +8,6 @@
     DerivePointerAlignment: false,
     NamespaceIndentation: Inner,
     AlignAfterOpenBracket: AlwaysBreak,
-    BinPackArguments: false,
+    BinPackArguments: true,
     BreakConstructorInitializers: AfterColon,
 }
